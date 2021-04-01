@@ -8,3 +8,4 @@ for instrument in midi_data.instruments:
     for note in instrument.notes:
         print(f'{note.pitch:10} {note.start:10} {note.end:10}')
 		print('hey')
+		j
