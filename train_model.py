@@ -3,13 +3,13 @@ from glob import glob
 import numpy as np
 import random
 import tensorflow as tf
-from tensorflow.keras import datasets, layers, models
 import matplotlib.pyplot as plt
+from tensorflow.keras import datasets, layers, models
 
 #Sources:
 #https://medium.com/@anuj_shah/creating-custom-data-generator-for-training-deep-learning-models-part-2-be9ad08f3f0e
  
-fmidi = 'C:/Users/thoma/Documents/GitHub/Midi-Arduino-Interface/Dataset/'
+fmidi = 'C:/Users/sherktho/Documents/GitHub/Midi-Arduino-Interface/Dataset/'
 genres = glob(fmidi+'*')
 
 files = []
@@ -25,24 +25,21 @@ def generator(files,labels,batch_size=32,shuffle_data=True,resize=224):
 	num_files = len(files)
 	while True: # Loop forever so the generator never terminates
 		random.shuffle(files)
-		print('begin')
 		for i in range(0, num_files, batch_size):
-			print('start')
 			# Get the samples you'll use in this batch
 			try:
 				batch_samples = files[i:i+batch_size]
 			except:
 				batch_samples = files[i:num_files-1]
 	
-            # Initialise X_train and y_train arrays for this batch
+            # Initialise X_train and Y_train arrays for this batch
 			X_train = []
-			y_train = []
+			Y_train = []
 
             # For each example
 			for j,batch_sample in enumerate(batch_samples):
                 # Load song data
 				try:
-					print(1)
 					midi_data = pretty_midi.PrettyMIDI(batch_sample)
 					midi_data = midi_data.get_piano_roll(10);
 					interval = int(random.random()*midi_data.shape[1]-51)
@@ -50,26 +47,26 @@ def generator(files,labels,batch_size=32,shuffle_data=True,resize=224):
 					midi_data[midi_data>0]=1
 					midi_data = np.expand_dims(midi_data, axis=0)
 					midi_data = np.expand_dims(midi_data, axis=3)
-	                # Add example to arrays
-					print(2)
+					if midi_data.shape[2]!=50:
+					    1/0
+                    # Add example to arrays
 					X_train.append(midi_data)
-					y_train.append(labels[j])
+					Y_train.append(labels[j])
 				except:
 					print('html')
+                    
             # Make sure they're numpy arrays (as opposed to lists)
-			#X_train = np.array(X_train)
-			#y_train = np.array(y_train)
-			print('stop')
+			X_train = np.concatenate(X_train, axis=0)
+			Y_train = np.array(Y_train)
 			print(len(X_train))
-			print(len(y_train))
+			print(len(Y_train))
             # The generator-y part: yield the next training batch            
-			yield X_train, y_train
+			yield X_train, Y_train
 
 #shape = 128 by 50		
-n = int(len(files)*.1)
+n = int(len(files)*.8)
 train_generator = generator(files[1:n], labels[1:n], batch_size=32)
 validation_generator = generator(files[n:len(files)-50], labels[n:len(files)-50], batch_size=32)
-
 
 model = models.Sequential()
 model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(128,50,1)))
@@ -88,7 +85,7 @@ model.compile(optimizer='adam',
 model.fit_generator(
         train_generator,
         steps_per_epoch=1,
-        epochs=3,
+        epochs=50,
         validation_data=validation_generator,
         validation_steps=1,
 		verbose=1)
