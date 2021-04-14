@@ -10,7 +10,7 @@ from keras.utils import to_categorical
 #Sources:
 #https://medium.com/@anuj_shah/creating-custom-data-generator-for-training-deep-learning-models-part-2-be9ad08f3f0e
 
-fmidi = 'C:/Users/sherktho/Documents/GitHub/Midi-Arduino-Interface/Dataset/'
+fmidi = 'C:/Users/Thomas/Documents/GitHub/Midi-Arduino-Interface/Dataset/'
 genres = glob(fmidi+'*')
 
 files = []
