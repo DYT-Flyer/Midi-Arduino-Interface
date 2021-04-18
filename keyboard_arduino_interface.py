@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 from pygame import midi
 from datetime import datetime
+import math
 #from apscheduler.scheduler import Scheduler
 
 #3,4,5
@@ -70,11 +71,13 @@ def extract_events(events):
     
     return eventpairs
 
-def extract_time(eventpairs):
+def extract_time(eventpairs, current_note, n, tb):
     for i in range(0,len(eventpairs)):
         te = eventpairs[i][1].time()
         ts = eventpairs[i][0].time()
-        tint = te - ts
+        tint = math.floor((te - ts)*n)
+        update_piano_roll(current_note, ts-tb, tint-tb)
+        
         
         
             
