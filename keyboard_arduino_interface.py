@@ -44,19 +44,41 @@ def extract_events(events):
     #List is sequential
     #Thus: if first item in list has status: 128, skip
     #If Last item in list has status 144, skip
-    current_event = events.pop(0)
-    current_note = current_event.data1
-    current_events = []
     
-    for i in range(0,len(events)):
-        if events[i].data1 == current_note:
-            
+    eventpair = []
+    eventpairs = []
+    
+    #Pairing begining and end notes
+    control = 1
+    while len(events)>0:
+        #Skip if first note is remainder from previous
+        current_event = events.pop(0)
+        if current_event.status == 128 and control == 1:
+            continue
         
+        control = 0
+        current_note = current_event.data1
+        
+        # matches note begin to note end
+        for i in range(0,len(events)):
+            if events[i].data1 == current_note:
+                eventpair.append(current_event)
+                eventpair.append(events.pop(i))
+                eventpairs.append(eventpair)
+                eventpair = []
+                break
     
-    
-    
-    
-    pause()
+    return eventpairs
+
+def extract_time(eventpairs):
+    for i in range(0,len(eventpairs)):
+        te = eventpairs[i][1].time()
+        ts = eventpairs[i][0].time()
+        tint = te - ts
+        
+        
+            
+            
     
 #Status: 144-Push Down
 #Status: 128-Let Up
@@ -68,6 +90,7 @@ while True:
     events = midis2events(midi_input.read(40), midi_input_id)
     for event in events:
         print(event)
+
 
     #scheduler.run()
     
