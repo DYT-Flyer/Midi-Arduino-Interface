@@ -1,38 +1,20 @@
 import pygame
 from pygame.locals import *
-from pygame import midi
 from datetime import datetime
 import math
-import pygame
 from pygame import midi as pygame_midi
 from pygame.midi import midis2events
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 from apscheduler.schedulers.background import BackgroundScheduler
-
-def job_function():
-    print("Hello World")
-
-# Schedule job_function to be called every two hours
-
-#3,4,5
-
-# def printMIDIDeviceList():
-#     for i in range(pygame.midi.get_count()):
-#         print(pygame.midi.get_device_info(i), i)
-
-# print("Found {} midi devices".format(pygame_midi.get_count()))
-# for i in range(pygame_midi.get_count()):
-#     print("#{}: {}".format(i, pygame_midi.get_device_info(i)))
-# print("Using input #{}".format(midi_input_id))
+import tensorflow as tf
 
 class midi_classifier:
-    def __init__(self, steps_per_second, number_of_notes, sample):
+    def __init__(self, steps_per_second, number_of_notes, sample, modelpath):
         pygame.init()
         pygame.font.init()
         pygame_midi.init()
-        
+        self.model = tf.keras.models.load_model(modelpath)
         self.midi_input_id = pygame_midi.get_default_input_id()
         self.midi_input = pygame_midi.Input(self.midi_input_id)
         self.sample = sample
@@ -53,7 +35,6 @@ class midi_classifier:
                 count += 1
                 
         self.x = np
-        
         sched = BackgroundScheduler()
         sched.add_job(self.update_piano_roll, 'interval', seconds=sample)
         sched.start()
@@ -72,18 +53,6 @@ class midi_classifier:
                     self.control = 0
                     self.tbegin = event.timestamp
                 self.events.append(event)
-            
-        
-    def update_piano_roll(self):
-        print('updating')
-        self.extract_events()
-        self.extract_time()
-        self.piano_roll = np.zeros([self.number_of_notes,self.steps_per_second*self.sample])
-        for note in self.upr:
-            print(note)
-            self.piano_roll[note[0],note[1]-self.count*self.steps_per_second:note[2]-self.count*self.steps_per_second] = 1
-        #self.plotpr()
-        self.count += 1
     
     def plotpr(self):
         plt.scatter(self.pos[:,0],self.pos[:,1],c=self.piano_roll.flatten())
@@ -124,50 +93,37 @@ class midi_classifier:
     def extract_time(self):
         self.upr = []
         for i in range(0,len(self.eventpairs)):
-            print('-------------------')
-            print(i)
             if i == 0:
                 self.tbegin = self.eventpairs[i][0].timestamp
-            
+                
             ts = self.eventpairs[i][0].timestamp
             te = self.eventpairs[i][1].timestamp
             current_note = self.eventpairs[i][0].data1
-            
-            tint = math.floor(((te - ts)/1000)*self.steps_per_second)
-            
-            tc = math.floor((ts-self.tbegin)/1000)
-            
-            print(ts)
-            print(te)
-            print((te-ts)/1000)
-            print(((te-ts)/1000)*self.steps_per_second)
-            print('-')
-            print(tc)
-            print(tint)
-            print(tc+tint)
-            print(self.count)
-            print((self.count-1)*self.sample*self.steps_per_second*1000)
-            print(tc-(self.count-1)*self.sample*self.steps_per_second*1000)
-            
-            
-            self.upr.append([current_note-48, tc, tint+tc])
+            tint = ((te - ts)/1000)*self.steps_per_second
+            tc = ((ts-self.tbegin)/1000)*self.steps_per_second
+            self.upr.append([current_note-48, math.floor(tc),math.ceil(tc+tint)])
+    
+         
+    def update_piano_roll(self):
+        print('updating')
+        self.extract_events()
+        self.extract_time()
+        self.piano_roll = np.zeros([self.number_of_notes,self.steps_per_second*self.sample])
+        for note in self.upr:
+            print(note)
+            try:
+                self.piano_roll[note[0],note[1]-self.count*self.steps_per_second:note[2]-self.count*self.steps_per_second] = 1
+            except:
+                print('over')
         
-#Status: 144-Push Down
-#Status: 128-Let Up
-#scheduler.run()
+        self.piano_roll = np.expand_dims(self.piano_roll,axis=0)
+        self.piano_roll = np.expand_dims(self.piano_roll,axis=3)
+        print(self.piano_roll.shape)
+        pred = self.model.predict(self.piano_roll)
+        print(pred)
+        self.count += 1
 
-a = midi_classifier(5,25,5)
+path = 'C:/Users/remove/Documents/GitHub/Midi-Arduino-Interface/model.hdf5'
+midi = midi_classifier(5,25,5,path)
 
-plt.plot(x, y, color='green', linestyle='dashed', linewidth = 3,
-         marker='o', markerfacecolor='blue', markersize=12)
-
-now = datetime.now()
-
-current_time = now.strftime("%H:%M:%S")
-print("Current Time =", current_time)
-
-sched = Scheduler()
-sched.start()
-
-sched.shutdown()
 
