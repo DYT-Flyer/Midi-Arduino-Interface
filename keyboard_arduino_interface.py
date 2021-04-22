@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from apscheduler.schedulers.background import BackgroundScheduler
 import tensorflow as tf
+import pyfirmata
 
 class midi_classifier:
     def __init__(self, steps_per_second, number_of_notes, sample, modelpath):
@@ -120,10 +121,71 @@ class midi_classifier:
         self.piano_roll = np.expand_dims(self.piano_roll,axis=3)
         print(self.piano_roll.shape)
         pred = self.model.predict(self.piano_roll)
-        print(pred)
+        print(np.argmax(pred,1))
+        pyfirmata.serial.Serial('COM3').write('1')
+        print(bytes(self.count%4))
         self.count += 1
 
+port = 'COM3'
+import serial
+#board = serial.Serial(port,9600)
+board = pyfirmata.Arduino(port,baudrate=9600)
 path = 'C:/Users/remove/Documents/GitHub/Midi-Arduino-Interface/model.hdf5'
 midi = midi_classifier(5,25,5,path)
+
+
+
+
+
+board.digital[0].pin_number
+
+
+
+
+board.analog[3].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
