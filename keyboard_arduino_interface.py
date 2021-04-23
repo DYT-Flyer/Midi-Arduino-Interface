@@ -134,13 +134,13 @@ path = 'C:/Users/remove/Documents/GitHub/Midi-Arduino-Interface/model.hdf5'
 midi = midi_classifier(5,25,5,path)
 
 
-
+future = matlab.engine.start_matlab(background=True)
+eng = future.result()
+eng.addpath("C:\Users\remove\Documents\GitHub\Midi-Arduino-Interface")
+eng.arduino_main(nargout=0)
 
 
 board.digital[0].pin_number
-
-
-
 
 board.analog[3].
 
