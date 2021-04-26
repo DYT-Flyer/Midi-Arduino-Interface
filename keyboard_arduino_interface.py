@@ -11,7 +11,7 @@ import tensorflow as tf
 import pyfirmata
 
 class midi_classifier:
-    def __init__(self, steps_per_second, number_of_notes, sample, modelpath):
+    def __init__(self, steps_per_second, number_of_notes, sample, modelpath,eng):
         pygame.init()
         pygame.font.init()
         pygame_midi.init()
@@ -25,7 +25,7 @@ class midi_classifier:
         self.events = []
         self.eventpairs = []
         self.count = 0
-        
+        self.eng = eng
         self.pos = np.zeros([number_of_notes*steps_per_second*sample,2])
         
         count = 0
@@ -122,28 +122,20 @@ class midi_classifier:
         print(self.piano_roll.shape)
         pred = self.model.predict(self.piano_roll)
         print(np.argmax(pred,1))
-        pyfirmata.serial.Serial('COM3').write('1')
+        if np.argmax(pred,1) == 3:
+            eng.turn_on(nargout=0)
+        else:
+            eng.turn_off(nargout=0)
         print(bytes(self.count%4))
         self.count += 1
 
-port = 'COM3'
-import serial
-#board = serial.Serial(port,9600)
-board = pyfirmata.Arduino(port,baudrate=9600)
+import matlab.engine
 path = 'C:/Users/remove/Documents/GitHub/Midi-Arduino-Interface/model.hdf5'
-midi = midi_classifier(5,25,5,path)
-
-
 future = matlab.engine.start_matlab(background=True)
 eng = future.result()
-eng.addpath("C:\Users\remove\Documents\GitHub\Midi-Arduino-Interface")
+eng.addpath("C:/Users/remove/Documents/GitHub/Midi-Arduino-Interface")
 eng.arduino_main(nargout=0)
-
-
-board.digital[0].pin_number
-
-board.analog[3].
-
+midi = midi_classifier(5,25,5,path,eng)
 
 
 
