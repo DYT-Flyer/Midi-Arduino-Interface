@@ -18,11 +18,13 @@ if l == 1:
     files = []
     labels = []
     for i,genre in enumerate(genres):
+        print(i)
         count = 0
         songs = glob(genre+'/*')
         for song in songs:
+            print(count)
             try:
-                if count < 650:
+                if count < 5000:
                     song = pretty_midi.PrettyMIDI(song)
                     song = song.get_piano_roll(5)
                     song = song[46:71,:]
@@ -115,7 +117,7 @@ model.add(layers.Conv2D(128, (3, 3), activation='relu'))
 model.add(layers.Flatten())
 model.add(layers.Dense(64, activation='relu'))
 model.add(layers.Dense(64, activation='relu'))
-model.add(layers.Dense(4))
+model.add(layers.Dense(5))
 
 
 from keras.models import Model
@@ -145,7 +147,7 @@ layer = vgg_block(layer, 256, 4)
 x = layers.Flatten()(layer)
 x = (layers.Dense(64, activation='relu'))(x)
 x = (layers.Dense(64, activation='relu'))(x)
-x = (layers.Dense(4, activation='softmax'))(x)
+x = (layers.Dense(5, activation='softmax'))(x)
 
 # create model
 model = Model(inputs=visible, outputs=x)

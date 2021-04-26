@@ -10,6 +10,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import tensorflow as tf
 import pyfirmata
 
+try:
+    tf_gpus = tf.config.list_physical_devices('GPU')
+    for gpu in tf_gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+except:
+    pass 
+
 class midi_classifier:
     def __init__(self, steps_per_second, number_of_notes, sample, modelpath,eng):
         pygame.init()
@@ -27,6 +34,7 @@ class midi_classifier:
         self.count = 0
         self.eng = eng
         self.pos = np.zeros([number_of_notes*steps_per_second*sample,2])
+        self.c = 1
         
         count = 0
         for i in range(0,number_of_notes):
@@ -121,12 +129,24 @@ class midi_classifier:
         self.piano_roll = np.expand_dims(self.piano_roll,axis=3)
         print(self.piano_roll.shape)
         pred = self.model.predict(self.piano_roll)
-        print(np.argmax(pred,1))
-        if np.argmax(pred,1) == 3:
-            eng.turn_on(nargout=0)
-        else:
-            eng.turn_off(nargout=0)
-        print(bytes(self.count%4))
+        print(pred)
+        print(np.argmax(pred,1)[0])
+        if np.argmax(pred,1)[0] == 0:
+            eng.turn_white_on(nargout=0)
+        
+        if np.argmax(pred,1)[0] == 1:    
+            eng.turn_green_on(nargout=0)
+        
+        if np.argmax(pred,1)[0] == 2:
+            eng.turn_red_on(nargout=0)
+        
+        if np.argmax(pred,1)[0] == 3:
+            eng.turn_blue_on(nargout=0)
+        
+        if np.argmax(pred,1)[0] == 4:
+            eng.turn_yellow_on(nargout=0)
+            
+        #print(bytes(self.count%4))
         self.count += 1
 
 import matlab.engine
