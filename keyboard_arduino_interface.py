@@ -9,6 +9,12 @@ import matplotlib.pyplot as plt
 from apscheduler.schedulers.background import BackgroundScheduler
 import tensorflow as tf
 import pyfirmata
+from matplotlib import pyplot as plt
+from matplotlib import colors
+from IPython import get_ipython
+get_ipython().run_line_magic('matplotlib', 'qt')
+import time
+import matlab
 
 try:
     tf_gpus = tf.config.list_physical_devices('GPU')
@@ -36,13 +42,18 @@ class midi_classifier:
         self.pos = np.zeros([number_of_notes*steps_per_second*sample,2])
         self.c = 1
         
+        #self.fig = plt.figure()
+        #self.cmap = colors.ListedColormap(['Blue','red'])
+        
         count = 0
         for i in range(0,number_of_notes):
             for j in range(0,steps_per_second*sample):
                 self.pos[count,0] = i
                 self.pos[count,1] = j
                 count += 1
-                
+        
+        self.eng.init_figure(nargout=0)
+        
         self.x = np
         sched = BackgroundScheduler()
         sched.add_job(self.update_piano_roll, 'interval', seconds=sample)
@@ -82,7 +93,6 @@ class midi_classifier:
             #Skip if first note is remainder from previous
             current_event = self.events.pop(0)
             current_event = current_event
-            print(current_event.status)
             if current_event.status == 128 and control == 1:
                 continue            
             control = 0
@@ -119,7 +129,6 @@ class midi_classifier:
         self.extract_time()
         self.piano_roll = np.zeros([self.number_of_notes,self.steps_per_second*self.sample])
         for note in self.upr:
-            print(note)
             try:
                 self.piano_roll[note[0],note[1]-self.count*self.steps_per_second:note[2]-self.count*self.steps_per_second] = 1
             except:
@@ -129,22 +138,51 @@ class midi_classifier:
         self.piano_roll = np.expand_dims(self.piano_roll,axis=3)
         print(self.piano_roll.shape)
         pred = self.model.predict(self.piano_roll)
-        print(pred)
-        print(np.argmax(pred,1)[0])
-        if np.argmax(pred,1)[0] == 0:
+        # print(pred)
+        # print(np.argmax(pred,1)[0])
+        #plt.pause(.1)
+        #self.fig = plt.pcolor(np.squeeze(self.piano_roll),cmap=self.cmap,edgecolors='k', linewidths=3)
+        temp = np.squeeze(self.piano_roll)
+        
+        
+        eng.workspace['pr'] = matlab.double(temp.tolist())
+        eng.update_figure(nargout=0)
+        #plt.show()
+        
+        if sum(temp[1,:])>0:
             eng.turn_white_on(nargout=0)
         
-        if np.argmax(pred,1)[0] == 1:    
+        
+        if sum(temp[3,:])>0:    
             eng.turn_green_on(nargout=0)
         
-        if np.argmax(pred,1)[0] == 2:
+        if sum(temp[6,:])>0:
             eng.turn_red_on(nargout=0)
         
-        if np.argmax(pred,1)[0] == 3:
+        if sum(temp[8,:])>0:
             eng.turn_blue_on(nargout=0)
         
-        if np.argmax(pred,1)[0] == 4:
+        if sum(temp[10,:])>0:
             eng.turn_yellow_on(nargout=0)
+        
+        
+        
+        eng.update_title(nargout=0)
+        
+        # if np.argmax(pred,1)[0] == 0:
+        #     eng.turn_white_on(nargout=0)
+        
+        # if np.argmax(pred,1)[0] == 1:    
+        #     eng.turn_green_on(nargout=0)
+        
+        # if np.argmax(pred,1)[0] == 2:
+        #     eng.turn_red_on(nargout=0)
+        
+        # if np.argmax(pred,1)[0] == 3:
+        #     eng.turn_blue_on(nargout=0)
+        
+        # if np.argmax(pred,1)[0] == 4:
+        #     eng.turn_yellow_on(nargout=0)
             
         #print(bytes(self.count%4))
         self.count += 1
