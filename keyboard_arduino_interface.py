@@ -4,6 +4,7 @@ import math
 from pygame import midi as pygame_midi
 from pygame.midi import midis2events
 import numpy as np
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 import tensorflow as tf
 from IPython import get_ipython
@@ -128,32 +129,32 @@ class midi_classifier:
         
         eng.workspace['pr'] = matlab.double(temp.tolist())
         eng.update_figure(nargout=0)
+        pred = np.argmax(pred)
         
-        if sum(temp[1,:])>0:
+        if pred == 0:
             eng.turn_white_on(nargout=0)
         
         
-        if sum(temp[3,:])>0:    
+        if pred == 1:    
             eng.turn_green_on(nargout=0)
         
-        if sum(temp[6,:])>0:
+        if pred == 2:
             eng.turn_red_on(nargout=0)
         
-        if sum(temp[8,:])>0:
+        if pred == 3:
             eng.turn_blue_on(nargout=0)
         
-        if sum(temp[10,:])>0:
+        if pred == 4:
             eng.turn_yellow_on(nargout=0)
         
         eng.update_title(nargout=0)
         self.count += 1
 
 import matlab.engine
-
-path = os.cwd() + '/model.hdf5'
+path = os.getcwd() + '/model.hdf5'
 future = matlab.engine.start_matlab(background=True)
 eng = future.result()
-eng.addpath(os.cwd()+'/matlab_code/')
+eng.addpath(os.getcwd()+'/matlab_code/')
 eng.arduino_main(nargout=0)
 midi = midi_classifier(5,25,5,path,eng)
 
