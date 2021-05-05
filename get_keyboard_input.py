@@ -2,8 +2,6 @@ import pygame
 from pygame.locals import *
 from pygame import midi
 
-
-
 def printMIDIDeviceList():
         for i in range(pygame.midi.get_count()):
             print(pygame.midi.get_device_info(i), i)

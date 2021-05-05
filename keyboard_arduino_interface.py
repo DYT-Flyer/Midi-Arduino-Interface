@@ -1,19 +1,13 @@
 import pygame
 from pygame.locals import *
-from datetime import datetime
 import math
 from pygame import midi as pygame_midi
 from pygame.midi import midis2events
 import numpy as np
-import matplotlib.pyplot as plt
 from apscheduler.schedulers.background import BackgroundScheduler
 import tensorflow as tf
-import pyfirmata
-from matplotlib import pyplot as plt
-from matplotlib import colors
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'qt')
-import time
 import matlab
 
 try:
@@ -41,9 +35,6 @@ class midi_classifier:
         self.eng = eng
         self.pos = np.zeros([number_of_notes*steps_per_second*sample,2])
         self.c = 1
-        
-        #self.fig = plt.figure()
-        #self.cmap = colors.ListedColormap(['Blue','red'])
         
         count = 0
         for i in range(0,number_of_notes):
@@ -73,10 +64,6 @@ class midi_classifier:
                     self.control = 0
                     self.tbegin = event.timestamp
                 self.events.append(event)
-    
-    def plotpr(self):
-        plt.scatter(self.pos[:,0],self.pos[:,1],c=self.piano_roll.flatten())
-        plt.show()
         
     def extract_events(self):
         #List is sequential
@@ -124,7 +111,6 @@ class midi_classifier:
     
          
     def update_piano_roll(self):
-        print('updating')
         self.extract_events()
         self.extract_time()
         self.piano_roll = np.zeros([self.number_of_notes,self.steps_per_second*self.sample])
@@ -136,18 +122,12 @@ class midi_classifier:
         
         self.piano_roll = np.expand_dims(self.piano_roll,axis=0)
         self.piano_roll = np.expand_dims(self.piano_roll,axis=3)
-        print(self.piano_roll.shape)
         pred = self.model.predict(self.piano_roll)
-        # print(pred)
-        # print(np.argmax(pred,1)[0])
-        #plt.pause(.1)
-        #self.fig = plt.pcolor(np.squeeze(self.piano_roll),cmap=self.cmap,edgecolors='k', linewidths=3)
         temp = np.squeeze(self.piano_roll)
         
         
         eng.workspace['pr'] = matlab.double(temp.tolist())
         eng.update_figure(nargout=0)
-        #plt.show()
         
         if sum(temp[1,:])>0:
             eng.turn_white_on(nargout=0)
@@ -165,33 +145,15 @@ class midi_classifier:
         if sum(temp[10,:])>0:
             eng.turn_yellow_on(nargout=0)
         
-        
-        
         eng.update_title(nargout=0)
-        
-        # if np.argmax(pred,1)[0] == 0:
-        #     eng.turn_white_on(nargout=0)
-        
-        # if np.argmax(pred,1)[0] == 1:    
-        #     eng.turn_green_on(nargout=0)
-        
-        # if np.argmax(pred,1)[0] == 2:
-        #     eng.turn_red_on(nargout=0)
-        
-        # if np.argmax(pred,1)[0] == 3:
-        #     eng.turn_blue_on(nargout=0)
-        
-        # if np.argmax(pred,1)[0] == 4:
-        #     eng.turn_yellow_on(nargout=0)
-            
-        #print(bytes(self.count%4))
         self.count += 1
 
 import matlab.engine
-path = 'C:/Users/remove/Documents/GitHub/Midi-Arduino-Interface/model.hdf5'
+
+path = os.cwd() + '/model.hdf5'
 future = matlab.engine.start_matlab(background=True)
 eng = future.result()
-eng.addpath("C:/Users/remove/Documents/GitHub/Midi-Arduino-Interface")
+eng.addpath(os.cwd()+'/matlab_code/')
 eng.arduino_main(nargout=0)
 midi = midi_classifier(5,25,5,path,eng)
 
